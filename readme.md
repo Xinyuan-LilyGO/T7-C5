@@ -1,7 +1,10 @@
 <h1 align = "center">🏍 T7-C5 💦</h1>
 
-## Introduction
+## 🌈Introduction
 The T7-C5 is a development board based on the ESP32C5-MINI module, featuring the high-performance ESP32C5 dual-mode Wi-Fi 6 and Bluetooth 5.0 chip, suitable for IoT applications. This development board integrates rich peripheral interfaces for rapid development and debugging.
+| board       | MCU           | WIFI   | BLE     | Flash |
+| ----------- | ------------- | ------ | ------- | ----- |
+| T-Dongle-C5 | ESP32-C5-MINI | WIFI 6 | BLE 5.0 | 4MB   |
 
 ## Pin Definition
 | Pin Number | Name     | PIN  |
