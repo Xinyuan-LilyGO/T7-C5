@@ -1,27 +1,28 @@
-#include <Arduino.h>
-#include <Button.h>
 #include "config.h"
+#include <Arduino.h>
+#include <BLEAdvertisedDevice.h>
+#include <BLEDevice.h>
+#include <BLEScan.h>
+#include <BLEUtils.h>
+#include <Button.h>
 #include <NTPClient.h>
 #include <WiFi.h>
 #include <WiFiUdp.h>
-#include <BLEDevice.h>
-#include <BLEUtils.h>
-#include <BLEScan.h>
-#include <BLEAdvertisedDevice.h>
+#include <Wire.h>
 
 // 配置5GHz WiFi信息（根据你的网络修改）
-const char* ssid = "your_wifi_ssid";
-const char* password = "your_wifi_password";
+const char *ssid = "your_wifi_ssid";
+const char *password = "your_wifi_password";
 
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "europe.pool.ntp.org", 8 * 3600, 60000);
 
-int scanTime = 5;  //In seconds
-BLEScan* pBLEScan;
+int scanTime = 5; // In seconds
+BLEScan *pBLEScan;
 
 WiFiUDP Udp;
 
-Button button1(PIN_BOOT);  // Connect your button between pin 2 and GND
+Button button1(PIN_BOOT); // Connect your button between pin 2 and GND
 uint32_t chipId = 0;
 static bool board_test_is_over = true;
 
@@ -30,9 +31,9 @@ void button_callck(void);
 
 class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
   void onResult(BLEAdvertisedDevice advertisedDevice) {
-    // Serial.printf("Advertised Device: %s \n", advertisedDevice.toString().c_str());
-    // 获取设备名称（可能为空）
-    // const char* name = advertisedDevice.getName().c_str();
+    // Serial.printf("Advertised Device: %s \n",
+    // advertisedDevice.toString().c_str()); 获取设备名称（可能为空） const
+    // char* name = advertisedDevice.getName().c_str();
 
     // // 获取MAC地址（强制转换格式）
     // String addr = advertisedDevice.getAddress().toString();
@@ -49,19 +50,22 @@ class MyAdvertisedDeviceCallbacks : public BLEAdvertisedDeviceCallbacks {
 
 void setup(void) {
   Serial.begin(115200);
+  Wire.begin(I2C_SDA, I2C_SCL);
   button1.begin();
   WiFi.STA.begin();
   BLEDevice::init("");
-  pBLEScan = BLEDevice::getScan();  //create new scan
+  pBLEScan = BLEDevice::getScan(); // create new scan
   pBLEScan->setAdvertisedDeviceCallbacks(new MyAdvertisedDeviceCallbacks());
-  pBLEScan->setActiveScan(true);  //active scan uses more power, but get results faster
+  pBLEScan->setActiveScan(
+      true); // active scan uses more power, but get results faster
   pBLEScan->setInterval(100);
-  pBLEScan->setWindow(99);  // less or equal setInterval value
+  pBLEScan->setWindow(99); // less or equal setInterval value
   delay(1000);
   Serial.println("-------------------------------------");
   Serial.println("Board:T7-C5");
   Serial.println("Factory examples!!!");
-  Serial.printf("ESP32 Chip model = %s Rev %d\n", ESP.getChipModel(), ESP.getChipRevision());
+  Serial.printf("ESP32 Chip model = %s Rev %d\n", ESP.getChipModel(),
+                ESP.getChipRevision());
   Serial.printf("This chip has %d cores\n", ESP.getChipCores());
   for (int i = 0; i < 17; i = i + 8) {
     chipId |= ((ESP.getEfuseMac() >> (40 - i)) & 0xff) << i;
@@ -70,6 +74,21 @@ void setup(void) {
   Serial.println(chipId);
   Serial.printf("CPU freq: %d MHz\n", ESP.getCpuFreqMHz());
   Serial.printf("available RAM: %d KB\n", ESP.getFreeHeap() / 1024);
+
+  uint8_t devices = 0;
+  Serial.println("Scanning I2C bus...");
+  for (uint8_t address = 1; address < 127; ++address) {
+    Wire.beginTransmission(address);
+    if (Wire.endTransmission() == 0) {
+      Serial.printf("Found device at 0x%02X\n", address);
+      ++devices;
+    }
+  }
+
+  if (devices == 0) {
+    Serial.println("No I2C devices found");
+  }
+  Serial.println("Scan complete");
 }
 
 void loop() {
@@ -94,7 +113,7 @@ void button_callck(void) {
   WiFi.setBandMode(WIFI_BAND_MODE_5G_ONLY);
   ScanWiFi();
 
-  BLEScanResults* foundDevices;
+  BLEScanResults *foundDevices;
   Serial.println("BLE Devices scan:");
   foundDevices = pBLEScan->start(scanTime, false);
   int ble_scan_count = foundDevices->getCount();
@@ -104,7 +123,8 @@ void button_callck(void) {
   } else {
     Serial.print("[error] There is no bluetooth nearby. Please check!!!");
   }
-  pBLEScan->clearResults();  // delete results fromBLEScan buffer to release memory
+  pBLEScan
+      ->clearResults(); // delete results fromBLEScan buffer to release memory
   Serial.println("-------------------------------------");
   Serial.println("Get Current Time:");
   WiFi.begin(ssid, password);
@@ -137,8 +157,8 @@ void ScanWiFi() {
   } else {
     // Serial.print(n);
     // Serial.println(" networks found");
-    // Serial.println("Nr | SSID                             | RSSI | CH | Encryption");
-    // for (int i = 0; i < n; ++i) {
+    // Serial.println("Nr | SSID                             | RSSI | CH |
+    // Encryption"); for (int i = 0; i < n; ++i) {
     //   // Print SSID and RSSI for each network found
     //   Serial.printf("%2d", i + 1);
     //   Serial.print(" | ");

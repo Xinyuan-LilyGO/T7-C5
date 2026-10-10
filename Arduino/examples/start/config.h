@@ -1,1 +1,0 @@
-#define PIN_BOOT 28
